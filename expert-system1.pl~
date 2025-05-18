@@ -1,0 +1,149 @@
+% ---------- Book Facts ----------
+% Format: book(Name, Author, Genre, Language, Year, Publisher, Length, AgeGroup).
+
+book('To Kill a Mockingbird', 'Harper Lee', fiction, english, 1960, penguin, medium, adults).
+book('Harry Potter and the Sorcerer\'s Stone', 'J.K. Rowling', fantasy, english, 1997, bloomsbury, long, teens).
+book('The Great Gatsby', 'F. Scott Fitzgerald', fiction, english, 1925, scribner, short, adults).
+book('The Hobbit', 'J.R.R. Tolkien', fantasy, english, 1937, allen, medium, teens).
+book('1984', 'George Orwell', dystopian, english, 1949, secker, medium, adults).
+book('Pride and Prejudice', 'Jane Austen', romance, english, 1813, penguin, medium, adults).
+book('The Catcher in the Rye', 'J.D. Salinger', fiction, english, 1951, littlebrown, medium, adults).
+book('The Alchemist', 'Paulo Coelho', adventure, portuguese, 1988, harpercollins, medium, adults).
+book('Frankenstein', 'Mary Shelley', gothic, english, 1818, lackington, medium, adults).
+
+% ---------- Recommendation System ----------
+
+recommend_books :-
+    write('Welcome to the Book Recommendation System!'), nl,
+    write('Please answer the following questions to get a book recommendation.'), nl,
+
+    ask_previous_book(PreviousBook),
+    ( PreviousBook \= 'none' ->
+        recommend_similar_book(PreviousBook)
+    ;
+        ask_author(Author),
+        ask_genre(Genre),
+        ask_language(Language),
+        ask_year(Year),
+        ask_publisher(Publisher),
+        ask_length(Length),
+        ask_age_group(AgeGroup),
+
+        nl, write('Here are the recommended books based on your preferences:'), nl,
+        find_books(Author, Genre, Language, Year, Publisher, Length, AgeGroup)
+    ).
+
+ask_previous_book(PreviousBook) :-
+    write('Do you want recommendations based on a previously read book? (Type the book name in quotes or type "none") '), nl,
+    read(UserInput),
+    process_input(UserInput, PreviousBook).
+
+process_input('any', any) :- !.
+process_input(UserInput, UserInput).
+
+recommend_similar_book(PreviousBook) :-
+    book(PreviousBook, Author, Genre, Language, Year, Publisher, Length, AgeGroup),
+    find_similar_book(PreviousBook, Author, Genre, Language, Year, Publisher, Length, AgeGroup).
+
+find_similar_book(PreviousBook, Author, Genre, Language, Year, Publisher, Length, AgeGroup) :-
+    findall(
+        [Name, SimilarityScore],
+        ( book(Name, A, G, L, Y, P, Len, AG),
+          Name \= PreviousBook,
+          similarity_score([Author, Genre, Language, Year, Publisher, Length, AgeGroup], [A, G, L, Y, P, Len, AG], SimilarityScore)
+        ),
+        SimilarBooks),
+    sort_similar_books(SimilarBooks, SortedBooks),
+    SortedBooks = [[BestMatch, _] | _],
+    write('Based on your previously read book, we recommend: '), write(BestMatch), nl.
+
+find_books(Author, Genre, Language, Year, Publisher, Length, AgeGroup) :-
+    findall(
+        [Name, MatchScore],
+        ( book(Name, A, G, L, Y, P, Len, AG),
+          similarity_score([Author, Genre, Language, Year, Publisher, Length, AgeGroup], [A, G, L, Y, P, Len, AG], MatchScore)
+        ),
+        MatchedBooks),
+    sort_similar_books(MatchedBooks, SortedBooks),
+    ( SortedBooks = [[BestMatch, _] | _] ->
+        write('We recommend: '), write(BestMatch), nl
+    ;
+        write('No books match your preferences.'), nl
+    ).
+
+% ---------- Sort for Similarity Score (Descending) ----------
+
+sort_similar_books(Unsorted, Sorted) :-
+    predsort(compare_scores_desc, Unsorted, Sorted).
+
+compare_scores_desc(Order, [_, S1], [_, S2]) :-
+    compare(OrderRev, S2, S1),
+    reverse_order(OrderRev, Order).
+
+reverse_order(<, >).
+reverse_order(>, <).
+reverse_order(=, =).
+
+% ---------- Similarity Comparison ----------
+
+similarity_score([A1, G1, L1, Y1, P1, Len1, AG1], [A2, G2, L2, Y2, P2, Len2, AG2], Score) :-
+    compare_attribute(A1, A2, AuthorScore),
+    compare_attribute(G1, G2, GenreScore),
+    compare_attribute(L1, L2, LanguageScore),
+    compare_year(Y1, Y2, YearScore),
+    compare_attribute(P1, P2, PublisherScore),
+    compare_attribute(Len1, Len2, LengthScore),
+    compare_attribute(AG1, AG2, AgeGroupScore),
+    Score is AuthorScore + GenreScore + LanguageScore + YearScore + PublisherScore + LengthScore + AgeGroupScore.
+
+compare_attribute(any, _, 1) :- !.
+compare_attribute(_, any, 1) :- !.
+compare_attribute(X, X, 1) :- !.
+compare_attribute(_, _, 0).
+
+compare_year(any, _, 1) :- !.
+compare_year(_, any, 1) :- !.
+compare_year(Y1, Y2, 1) :- Y1 = Y2, !.
+compare_year(Y1, Y2, 0.5) :- abs(Y1 - Y2) =< 5, !.
+compare_year(_, _, 0).
+
+% ---------- Ask User Preferences ----------
+
+ask_author(Author) :-
+    write('Preferred author? (Type name in quotes or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Author).
+
+ask_genre(Genre) :-
+    write('Preferred genre? (e.g., fiction, fantasy, romance, or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Genre).
+
+ask_language(Language) :-
+    write('Preferred language? (e.g., english, spanish, or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Language).
+
+ask_year(Year) :-
+    write('Preferred publication year? (e.g., 1984 or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Year).
+
+ask_publisher(Publisher) :-
+    write('Preferred publisher? (e.g., penguin, harper, or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Publisher).
+
+ask_length(Length) :-
+    write('Preferred book length? (short, medium, long, or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, Length).
+
+ask_age_group(AgeGroup) :-
+    write('Age group? (kids, teens, adults, or "any") '), nl,
+    read(UserInput),
+    process_input(UserInput, AgeGroup).
+
+% ---------- Auto-start in SWI-Prolog ----------
+
+:- initialization(recommend_books).
