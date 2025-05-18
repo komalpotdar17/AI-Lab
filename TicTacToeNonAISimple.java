@@ -1,7 +1,7 @@
 import java.util.Arrays;
 import java.util.Scanner;
 
-public class TicTacToeNonAI {
+public class TicTacToeNonAISimple {
     static final int SIZE = 9; 
     static final int[] MOVETABLE = new int[19683]; 
     static int[] board = new int[SIZE]; 

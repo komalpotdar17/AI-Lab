@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class TicTacToeAI {
+public class TicTacToeAIMinMax {
     static final char HUMAN = 'O', AI = 'X', EMPTY = ' ';
     static char[][] board = {
         {EMPTY, EMPTY, EMPTY},
