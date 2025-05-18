@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class EightPuzzleSolver {
+public class EightPuzzleSolverAStar {
 
     static class State {
         int[][] board;
