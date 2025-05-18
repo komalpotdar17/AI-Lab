@@ -1,9 +1,16 @@
 import java.util.Scanner;
 
-public class TicTacToeNonAISimple {
+public class TicTacToeNonAIMagicSquare {
     static final int SIZE = 9;
     static final int[] MOVETABLE = new int[19683];
     static int[] board = new int[SIZE];
+
+    // Magic square positions: numbers from 1 to 9 in magic square order
+    static final int[] MAGIC = {
+        8, 1, 6,
+        3, 5, 7,
+        4, 9, 2
+    };
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -17,14 +24,13 @@ public class TicTacToeNonAISimple {
             if (isHumanTurn) {
                 System.out.println("Your turn (X). Enter position (1-9): ");
                 int move = scanner.nextInt() - 1;
-
                 if (move < 0 || move >= SIZE || board[move] != 0) {
                     System.out.println("Invalid move! Try again.");
                     continue;
                 }
                 board[move] = 1;
             } else {
-                System.out.println("Computer (O) is making a move...");
+                System.out.println("AI (O) is making a move...");
                 int nextState = MOVETABLE[convertBoardToDecimal(board)];
                 board = convertDecimalToBoard(nextState);
             }
@@ -62,10 +68,43 @@ public class TicTacToeNonAISimple {
         for (int i = 0; i < SIZE; i++) {
             if (board[i] == 0) {
                 board[i] = 2;
+                if (isWinning(board, 2)) {
+                    return convertBoardToDecimal(board);
+                }
+                board[i] = 0;
+            }
+        }
+        for (int i = 0; i < SIZE; i++) {
+            if (board[i] == 0) {
+                board[i] = 1;
+                if (isWinning(board, 1)) {
+                    board[i] = 2;
+                    return convertBoardToDecimal(board);
+                }
+                board[i] = 0;
+            }
+        }
+        for (int i = 0; i < SIZE; i++) {
+            if (board[i] == 0) {
+                board[i] = 2;
                 return convertBoardToDecimal(board);
             }
         }
         return convertBoardToDecimal(board);
+    }
+
+    public static boolean isWinning(int[] board, int player) {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = i + 1; j < SIZE; j++) {
+                for (int k = j + 1; k < SIZE; k++) {
+                    if (board[i] == player && board[j] == player && board[k] == player) {
+                        int sum = MAGIC[i] + MAGIC[j] + MAGIC[k];
+                        if (sum == 15) return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static void printBoard() {
@@ -82,18 +121,14 @@ public class TicTacToeNonAISimple {
     }
 
     public static boolean isGameOver() {
-        int[][] winConditions = {
-            {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
-            {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
-            {0, 4, 8}, {2, 4, 6}
-        };
-
-        for (int[] win : winConditions) {
-            if (board[win[0]] != 0 && board[win[0]] == board[win[1]] && board[win[1]] == board[win[2]]) {
-                printBoard();
-                System.out.println("\nWinner: " + (board[win[0]] == 1 ? "Human (X)" : "Computer (O)"));
-                return true;
-            }
+        if (isWinning(board, 1)) {
+            printBoard();
+            System.out.println("\nHuman (X) wins!");
+            return true;
+        } else if (isWinning(board, 2)) {
+            printBoard();
+            System.out.println("\nAI (O) wins!");
+            return true;
         }
 
         for (int cell : board) {
